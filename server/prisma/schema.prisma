@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  FIELD_AGENT
+}
+
+enum Stage {
+  PLANTED
+  GROWING
+  READY
+  HARVESTED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  role         Role          @default(FIELD_AGENT)
+  fields       Field[]       @relation("AgentFields")
+  observations Observation[]
+  createdAt    DateTime      @default(now())
+}
+
+model Field {
+  id              String        @id @default(uuid())
+  name            String
+  cropType        String
+  plantingDate    DateTime
+  currentStage    Stage         @default(PLANTED)
+  status          String        // We will calculate this logic-side: Active, At Risk, Completed
+  assignedAgent   User?         @relation("AgentFields", fields: [agentId], references: [id])
+  agentId         String?
+  observations    Observation[]
+  updatedAt       DateTime      @updatedAt
+}
+
+model Observation {
+  id        String   @id @default(uuid())
+  note      String
+  field     Field    @relation(fields: [fieldId], references: [id])
+  fieldId   String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime @default(now())
+}
